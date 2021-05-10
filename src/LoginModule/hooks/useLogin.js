@@ -51,8 +51,8 @@ export function useLogin() {
           password,
         }),
       });
-      const { token, error } = await response.json();
-      if (token) {
+      const { data, error } = await response.json();
+      if (data) {
         dispatch({
           type: 'success',
           user: { email },
