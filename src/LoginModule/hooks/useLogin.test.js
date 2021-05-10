@@ -1,74 +1,87 @@
-import {renderHook} from '@testing-library/react-hooks'
-import { act } from 'react-dom/test-utils';
+import { renderHook, act } from '@testing-library/react-hooks';
+
 import { useLogin } from './useLogin';
 
+describe('useLogin', () => {
 
-describe('Use login', () => {
+//TEST CASE TO CHECK THE INTITIAL STATE
 
-
-    test('initial state values', () => {
-
-        //act
-        const {result} = renderHook(() => useLogin());
-        //assert
-     expect(result.current.state).toEqual({
-            status:'idle',
-            user:null,
-            error:null
-        })
-
-    })
+  test('initial state', () => {
+    const { result } = renderHook(() => useLogin());
+    expect(result.current.state).toEqual({
+      status: 'idle',
+      user: null,
+      error: null,
+    });
+  });
 
 
-    test('successful login flow', async () => {
+  // TEST CASE TO CHECK SUCCESS OF THE API CALL
 
-    //arrage 
-    //make a successful api response
-
+  test('successful login flow', async () => {
     jest
-    .spyOn(window,'fetch')
-    .mockResolvedValue({json: () => data:'123'}) });
+      .spyOn(window, 'fetch')
+      .mockResolvedValue({ json: () => ({ token: '123' }) });
 
-    const {result, waitForNextUpdate } = renderHook(() => useLogin())
- 
-    //act
+    const { result, waitForNextUpdate } = renderHook(() => useLogin());
 
     act(() => {
-        result.current.onSubmit({
-            email: 'test@email.com',
-            password: 'password',
-        })
-    })
+      result.current.onSubmit({
+        email: 'test@email.com',
+        password: 'password',
+      });
+    });
 
-    //assert
-
-
-        //it must be pending when the call is triggered
+    // sets state to pending
     expect(result.current.state).toEqual({
-        status:'pending',
-        user:null,
-        error: null
-    })
+      status: 'pending',
+      user: null,
+      error: null,
+    });
 
     await waitForNextUpdate();
 
-
-        //when the call is success, the email id shud be updated
-
-        expect(result.current.state).toEqual({
-            status: 'resolved',
-            user:{email:'test@email.com'},
-            error: null
-        })
-
-        
-    })
+    // sets state to resolved, stores email address
+    expect(result.current.state).toEqual({
+      status: 'resolved',
+      user: {
+        email: 'test@email.com',
+      },
+      error: null,
+    });
+  });
 
 
-    //ERROR SCENARIO
-     test('error in login flow', )
+  // TEST CASE TO CHECK THE ERROR SCENARIO
 
+  test('error login flow', async () => {
+    jest
+      .spyOn(window, 'fetch')
+      .mockResolvedValue({ json: () => ({ error: 'invalid password' }) });
 
+    const { result, waitForNextUpdate } = renderHook(() => useLogin());
 
+    act(() => {
+      result.current.onSubmit({
+        email: 'test@email.com',
+        password: 'invalid',
+      });
+    });
 
-})
+    // sets state to pending
+    expect(result.current.state).toEqual({
+      status: 'pending',
+      user: null,
+      error: null,
+    });
+
+    await waitForNextUpdate();
+
+    // sets state to rejected, stores error
+    expect(result.current.state).toEqual({
+      status: 'rejected',
+      user: null,
+      error: 'invalid password',
+    });
+  });
+});
